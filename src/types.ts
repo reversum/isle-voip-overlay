@@ -1,0 +1,21 @@
+export type OverlaySettings = {
+  showHideHotkey: string;
+  micDeviceId: string | null;
+  outputDeviceId: string | null;
+  serverHash: string;
+  apiBaseUrl: string;
+  centralUrl: string;
+  steamId: string | null;
+  steamToken: string | null;
+  inputMode: string;
+  pttKey: string;
+  pushToMuteKey: string;
+  toggleMuteKey: string;
+  micGainDb: number;
+  outputVolume: number;
+  inputVolume: number;
+  noiseSuppression: boolean;
+  autoGainControl: boolean;
+  selfMonitor: boolean;
+  vadThreshold: number;
+};
