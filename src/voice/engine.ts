@@ -361,7 +361,7 @@ export type ConnectParams = {
   autoGainControl?: boolean;
   selfMonitor?: boolean;
   vadThreshold?: number;
-  getTicket?: () => Promise<{ ticket: string } | { error: string }>;
+  getTicket?: () => Promise<{ ticket: string } | { error: string; status?: number }>;
 };
 
 export class VoiceEngine {
@@ -394,7 +394,7 @@ export class VoiceEngine {
     ticket: string;
     channel: string;
     groupPassword?: string;
-    getTicket?: () => Promise<{ ticket: string } | { error: string }>;
+    getTicket?: () => Promise<{ ticket: string } | { error: string; status?: number }>;
   } | null = null;
   private voiceIntentional = false;
   private voiceAttempts = 0;
@@ -457,7 +457,7 @@ export class VoiceEngine {
       params.centralUrl,
       params.hash,
       params.ticket,
-      params.getTicket ? () => this.freshTicket() : undefined,
+      params.getTicket ? async () => (await this.freshTicket()) ?? "" : undefined,
     );
 
     this.transport.onState = (s) => {
@@ -745,7 +745,7 @@ export class VoiceEngine {
     }, delay);
   }
 
-  private async freshTicket(): Promise<string> {
+  private async freshTicket(): Promise<string | null> {
     const ctx = this.connectCtx;
     if (!ctx?.getTicket) return ctx?.ticket ?? "";
     try {
@@ -754,6 +754,7 @@ export class VoiceEngine {
         ctx.ticket = res.ticket;
         return res.ticket;
       }
+      if ("status" in res && res.status === 401) return null;
     } catch {
     }
     return ctx.ticket;
@@ -764,6 +765,10 @@ export class VoiceEngine {
     if (this.voiceIntentional || !ctx) return;
     const ticket = await this.freshTicket();
     if (this.voiceIntentional || this.connectCtx !== ctx) return;
+    if (ticket === null) {
+      this.onError?.("login_required");
+      return;
+    }
     this.transport.connect(ctx.centralUrl, ctx.hash, ticket, ctx.channel, ctx.groupPassword);
   }
 

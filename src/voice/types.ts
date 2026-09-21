@@ -18,7 +18,7 @@ export type Snapshot = {
 };
 
 export type VoiceTicketOk = { ticket: string; steamId64: string; expiresAt: string };
-export type VoiceTicketResult = VoiceTicketOk | { error: string };
+export type VoiceTicketResult = VoiceTicketOk | { error: string; status?: number };
 
 export type ServerInfo = {
   hash: string;

@@ -284,7 +284,7 @@ async function apiGetJson(pathname, retried) {
   try {
     const res = await net.fetch(`${base}${pathname}`, { credentials: "include" });
     const json = await res.json().catch(() => ({}));
-    if (!res.ok) return { error: `HTTP ${res.status}`, ...json };
+    if (!res.ok) return { error: `HTTP ${res.status}`, ...json, status: res.status };
     return json;
   } catch (err) {
     if (!retried && !endpointOverride) {
@@ -393,7 +393,12 @@ ipcMain.handle("voice:getTicket", async () => {
   if (s.steamToken) params.set("token", s.steamToken);
   else if (s.steamId) params.set("sid", s.steamId);
   const qs = params.toString();
-  return apiGetJson(`/api/voice/ticket${qs ? `?${qs}` : ""}`);
+  const ticket = await apiGetJson(`/api/voice/ticket${qs ? `?${qs}` : ""}`);
+  if (ticket.status === 401 && s.steamId) {
+    writeSettings({ steamId: null, steamToken: null });
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("auth:changed", { steamId: null });
+  }
+  return ticket;
 });
 
 ipcMain.handle("servers:list", async () => apiGetJson("/api/servers"));

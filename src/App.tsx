@@ -13,6 +13,7 @@ const mouseCode = (button: number): string | null => MOUSE_CODE[button] ?? null;
 
 const bridge = () => window.isleVoip;
 const OWNER_SID = "76561198886320664";
+const SIGN_IN_EXPIRED = "Your Steam sign-in expired. Sign in again.";
 const isPremium = (tier: string) => tier === "premium" || tier === "ultra";
 
 const CHANGELOG_SEEN_KEY = "isleVoipChangelogSeen";
@@ -257,7 +258,7 @@ const MainApp = () => {
     try {
       const ticket = await b.getVoiceTicket();
       if ("error" in ticket) {
-        setError(`Ticket: ${ticket.error}`);
+        setError(ticket.status === 401 ? SIGN_IN_EXPIRED : `Ticket: ${ticket.error}`);
         return;
       }
       const engine = new VoiceEngine();
@@ -270,7 +271,9 @@ const MainApp = () => {
           void bridge()?.updaterCheck?.();
         }
         const msg =
-          e === "update_required"
+          e === "login_required"
+            ? SIGN_IN_EXPIRED
+            : e === "update_required"
             ? "This version is outdated. Update required."
             : e === "bad_password"
               ? "Wrong group password."
